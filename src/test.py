@@ -1,4 +1,4 @@
-from zlibrary import AsyncZlib
+from zlibrary_fork import AsyncZlib
 import asyncio
 import logging
 import os
