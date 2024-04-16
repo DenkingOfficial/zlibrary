@@ -9,7 +9,7 @@ logging.getLogger("zlibrary").setLevel(logging.DEBUG)
 
 async def main():
     lib = AsyncZlib()
-    await lib.login(os.environ.get('ZLOGIN'), os.environ.get('ZPASSW'))
+    await lib.login(os.environ.get("ZLOGIN"), os.environ.get("ZPASSW"))
 
     # count: 10 results per set
     paginator = await lib.search(q="biology", count=10)
@@ -31,13 +31,13 @@ async def main():
     print(prev_set)
 
     book = await paginator.result[0].fetch()
-    assert book.get('name')
+    assert book.get("name")
     print(book)
 
-    book = await lib.get_by_id('437612/42d522')
-    assert book.get('name')
+    book = await lib.get_by_id("437612/42d522")
+    assert book.get("name")
     print(book)
 
 
-if __name__ in '__main__':
+if __name__ in "__main__":
     asyncio.run(main())

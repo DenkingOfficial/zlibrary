@@ -2,23 +2,36 @@ from enum import Enum
 
 
 class Extension(Enum):
-    TXT = 'TXT'
-    PDF = 'PDF'
-    FB2 = 'FB2'
-    EPUB = 'EPUB'
-    LIT = 'LIT'
-    MOBI = 'MOBI'
-    RTF = 'RTF'
-    DJV = 'DJV'
-    DJVU = 'DJVU'
-    AZW = 'AZW'
-    AZW3 = 'AZW3'
+    TXT = "TXT"
+    PDF = "PDF"
+    FB2 = "FB2"
+    EPUB = "EPUB"
+    LIT = "LIT"
+    MOBI = "MOBI"
+    RTF = "RTF"
+    DJV = "DJV"
+    DJVU = "DJVU"
+    AZW = "AZW"
+    AZW3 = "AZW3"
 
 
 class OrderOptions(Enum):
     POPULAR = "popular"
     NEWEST = "date_created"
     RECENT = "date_updated"
+
+
+class BookOrderOptions(Enum):
+    POPULAR = "popular"
+    BEST_MATCH = "bestmatch"
+    DATE = "date"
+    FROM_A_TO_Z = "titleA"
+    FROM_Z_TO_A = "title"
+    YEAR = "year"
+
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_
 
 
 class Language(Enum):

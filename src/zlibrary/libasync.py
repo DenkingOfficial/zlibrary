@@ -6,18 +6,28 @@ from typing import List, Union
 from urllib.parse import quote
 
 from .logger import logger
-from .exception import EmptyQueryError, ProxyNotMatchError, NoProfileError, NoDomainError, NoIdError
+from .exception import (
+    EmptyQueryError,
+    ProxyNotMatchError,
+    NoProfileError,
+    NoDomainError,
+    NoIdError,
+)
 from .util import GET_request, POST_request, HEAD_request
 from .abs import SearchPaginator, BookItem
 from .profile import ZlibProfile
-from .const import Extension, Language
+from .const import Extension, Language, BookOrderOptions
 
 
 ZLIB_DOMAIN = "https://singlelogin.re/"
 LOGIN_DOMAIN = "https://singlelogin.re/rpc.php"
 
-ZLIB_TOR_DOMAIN = "http://bookszlibb74ugqojhzhg2a63w5i2atv5bqarulgczawnbmsb6s6qead.onion"
-LOGIN_TOR_DOMAIN = "http://loginzlib2vrak5zzpcocc3ouizykn6k5qecgj2tzlnab5wcbqhembyd.onion/rpc.php"
+ZLIB_TOR_DOMAIN = (
+    "http://bookszlibb74ugqojhzhg2a63w5i2atv5bqarulgczawnbmsb6s6qead.onion"
+)
+LOGIN_TOR_DOMAIN = (
+    "http://loginzlib2vrak5zzpcocc3ouizykn6k5qecgj2tzlnab5wcbqhembyd.onion/rpc.php"
+)
 
 
 class AsyncZlib:
@@ -41,11 +51,16 @@ class AsyncZlib:
 
     @mirror.setter
     def mirror(self, value):
-        if not value.startswith('http'):
-            value = 'https://' + value
+        if not value.startswith("http"):
+            value = "https://" + value
         self._mirror = value
 
-    def __init__(self, onion: bool = False, proxy_list: list = None, disable_semaphore: bool = False):
+    def __init__(
+        self,
+        onion: bool = False,
+        proxy_list: list = None,
+        disable_semaphore: bool = False,
+    ):
         if proxy_list:
             if type(proxy_list) is list:
                 self.proxy_list = proxy_list
@@ -60,8 +75,10 @@ class AsyncZlib:
             self.mirror = self.domain
 
             if not proxy_list:
-                print("Tor proxy must be set to route through onion domains.\n"
-                      "Set up a tor service and use: onion=True, proxy_list=['socks5://127.0.0.1:9050']")
+                print(
+                    "Tor proxy must be set to route through onion domains.\n"
+                    "Set up a tor service and use: onion=True, proxy_list=['socks5://127.0.0.1:9050']"
+                )
                 exit(1)
         else:
             self.login_domain = LOGIN_DOMAIN
@@ -73,9 +90,13 @@ class AsyncZlib:
     async def _r(self, url: str):
         if self.semaphore:
             async with self.__semaphore:
-                return await GET_request(url, proxy_list=self.proxy_list, cookies=self.cookies)
+                return await GET_request(
+                    url, proxy_list=self.proxy_list, cookies=self.cookies
+                )
         else:
-            return await GET_request(url, proxy_list=self.proxy_list, cookies=self.cookies)
+            return await GET_request(
+                url, proxy_list=self.proxy_list, cookies=self.cookies
+            )
 
     async def login(self, email: str, password: str):
         data = {
@@ -86,10 +107,12 @@ class AsyncZlib:
             "action": "login",
             "isSingleLogin": 1,
             "redirectUrl": "",
-            "gg_json_mode": 1
+            "gg_json_mode": 1,
         }
 
-        resp, jar = await POST_request(self.login_domain, data, proxy_list=self.proxy_list)
+        resp, jar = await POST_request(
+            self.login_domain, data, proxy_list=self.proxy_list
+        )
         self._jar = jar
 
         self.cookies = {}
@@ -98,9 +121,13 @@ class AsyncZlib:
         logger.debug("Set cookies: %s", self.cookies)
 
         if self.onion:
-            url = self.domain + '/?remix_userkey=%s&remix_userid=%s' % (
-                self.cookies['remix_userkey'], self.cookies['remix_userid'])
-            resp, jar = await GET_request(url, proxy_list=self.proxy_list, cookies=self.cookies, save_cookies=True)
+            url = self.domain + "/?remix_userkey=%s&remix_userid=%s" % (
+                self.cookies["remix_userkey"],
+                self.cookies["remix_userid"],
+            )
+            resp, jar = await GET_request(
+                url, proxy_list=self.proxy_list, cookies=self.cookies, save_cookies=True
+            )
 
             self._jar = jar
             for cookie in self._jar:
@@ -139,21 +166,29 @@ class AsyncZlib:
             #            self.mirror = dom
             #            logger.info("Set working mirror: %s" % self.mirror)
             #            break
-            self.mirror = ZLIB_DOMAIN.strip('/')
+            self.mirror = ZLIB_DOMAIN.strip("/")
 
             if not self.mirror:
                 raise NoDomainError
 
-        self.profile = ZlibProfile(
-            self._r, self.cookies, self.mirror, ZLIB_DOMAIN)
+        self.profile = ZlibProfile(self._r, self.cookies, self.mirror, ZLIB_DOMAIN)
         return self.profile
 
     async def logout(self):
         self._jar = None
         self.cookies = None
 
-    async def search(self, q: str = "", exact: bool = False, from_year: int = None, to_year: int = None,
-                     lang: List[Union[Language, str]] = [], extensions: List[Union[Extension, str]] = [], count: int = 10) -> SearchPaginator:
+    async def search(
+        self,
+        q: str = "",
+        exact: bool = False,
+        from_year: int = None,
+        to_year: int = None,
+        lang: List[Union[Language, str]] = [],
+        extensions: List[Union[Extension, str]] = [],
+        count: int = 10,
+        order: str = "",
+    ) -> SearchPaginator:
         if not self.profile:
             raise NoProfileError
         if not q:
@@ -161,26 +196,32 @@ class AsyncZlib:
 
         payload = "%s/s/%s?" % (self.mirror, quote(q))
         if exact:
-            payload += '&e=1'
+            payload += "&e=1"
         if from_year:
             assert str(from_year).isdigit()
-            payload += '&yearFrom=%s' % (from_year)
+            payload += "&yearFrom=%s" % (from_year)
         if to_year:
             assert str(to_year).isdigit()
-            payload += '&yearTo=%s' % (to_year)
+            payload += "&yearTo=%s" % (to_year)
         if lang:
             assert type(lang) is list
             for l in lang:
-                payload += '&languages%5B%5D={}'.format(
-                    l if type(l) is str else l.value)
+                payload += "&languages%5B%5D={}".format(
+                    l if type(l) is str else l.value
+                )
         if extensions:
             assert type(extensions) is list
             for ext in extensions:
-                payload += '&extensions%5B%5D={}'.format(
-                    ext if type(ext) is str else ext.value)
+                payload += "&extensions%5B%5D={}".format(
+                    ext if type(ext) is str else ext.value
+                )
+        if order:
+            assert BookOrderOptions.has_value(order)
+            payload += "&order=%s" % (order)
 
         paginator = SearchPaginator(
-            url=payload, count=count, request=self._r, mirror=self.mirror)
+            url=payload, count=count, request=self._r, mirror=self.mirror
+        )
         await paginator.init()
         return paginator
 
@@ -189,50 +230,67 @@ class AsyncZlib:
             raise NoIdError
 
         book = BookItem(self._r, self.mirror)
-        book['url'] = '%s/book/%s' % (self.mirror, id)
+        book["url"] = "%s/book/%s" % (self.mirror, id)
         return await book.fetch()
 
-    async def full_text_search(self, q: str = "", exact: bool = False, phrase: bool = False,
-                               words: bool = False, from_year: int = None, to_year: int = None,
-                               lang: List[Union[Language, str]] = [], extensions: List[Union[Extension, str]] = [], count: int = 10) -> SearchPaginator:
+    async def full_text_search(
+        self,
+        q: str = "",
+        exact: bool = False,
+        phrase: bool = False,
+        words: bool = False,
+        from_year: int = None,
+        to_year: int = None,
+        lang: List[Union[Language, str]] = [],
+        extensions: List[Union[Extension, str]] = [],
+        count: int = 10,
+    ) -> SearchPaginator:
         if not self.profile:
             raise NoProfileError
         if not q:
             raise EmptyQueryError
         if not phrase and not words:
             raise Exception(
-                "You should either specify 'words=True' to match words, or 'phrase=True' to match phrase.")
+                "You should either specify 'words=True' to match words, or 'phrase=True' to match phrase."
+            )
 
         payload = "%s/fulltext/%s?" % (self.mirror, quote(q))
         if phrase:
-            check = q.split(' ')
+            check = q.split(" ")
             if len(check) < 2:
-                raise Exception(("At least 2 words must be provided for phrase search. "
-                                 "Use 'words=True' to match a single word."))
-            payload += '&type=phrase'
+                raise Exception(
+                    (
+                        "At least 2 words must be provided for phrase search. "
+                        "Use 'words=True' to match a single word."
+                    )
+                )
+            payload += "&type=phrase"
         else:
-            payload += '&type=words'
+            payload += "&type=words"
 
         if exact:
-            payload += '&e=1'
+            payload += "&e=1"
         if from_year:
             assert str(from_year).isdigit()
-            payload += '&yearFrom=%s' % (from_year)
+            payload += "&yearFrom=%s" % (from_year)
         if to_year:
             assert str(to_year).isdigit()
-            payload += '&yearTo=%s' % (to_year)
+            payload += "&yearTo=%s" % (to_year)
         if lang:
             assert type(lang) is list
             for l in lang:
-                payload += '&languages%5B%5D={}'.format(
-                    l if type(l) is str else l.value)
+                payload += "&languages%5B%5D={}".format(
+                    l if type(l) is str else l.value
+                )
         if extensions:
             assert type(extensions) is list
             for ext in extensions:
-                payload += '&extensions%5B%5D={}'.format(
-                    ext if type(ext) is str else ext.value)
+                payload += "&extensions%5B%5D={}".format(
+                    ext if type(ext) is str else ext.value
+                )
 
         paginator = SearchPaginator(
-            url=payload, count=count, request=self._r, mirror=self.mirror)
+            url=payload, count=count, request=self._r, mirror=self.mirror
+        )
         await paginator.init()
         return paginator

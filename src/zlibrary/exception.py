@@ -1,5 +1,3 @@
-
-
 class LoopError(Exception):
 
     def __init__(self, message):
@@ -33,7 +31,9 @@ class ProxyNotMatchError(Exception):
 class NoProfileError(Exception):
 
     def __init__(self):
-        super().__init__("You have to log in into your singlelogin.me account to access zlibrary. Use login() before performing the search.")
+        super().__init__(
+            "You have to log in into your singlelogin.me account to access zlibrary. Use login() before performing the search."
+        )
 
 
 class NoIdError(Exception):
